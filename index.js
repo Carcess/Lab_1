@@ -80,5 +80,27 @@ app.post('/api/albums', async (req, res) => {
       }
 });
 
+// Update a new album
+app.put('/api/albums/:id', async (req, res) => {
+    try {
+        // Check if data already exists in the collection
+        const existingData = await Album.findOne({ _id: req.params.id });
+        if (!existingData) {
+          // If data exists, return it
+          res.status(404).json(existingData);
+        } else {
+          Album.findByIdAndUpdate(req.params.id, {
+            title: req.body.title,
+            artist: req.body.artist,
+            year: req.body.year
+          })
+          .then(album => res.status(200).json(album))
+        }
+      } catch (error) {
+        // Handle any errors
+        res.status(500).json({ error: error.message });
+      }
+});
+
 app.listen(3000, () => console.log('Server running on port 3000'));
 

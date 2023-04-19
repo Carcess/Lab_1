@@ -7,7 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Album</title>
     <style>
-        tr,td,th{
+        tr,
+        td,
+        th {
             border: 1px solid gainsboro;
         }
     </style>
@@ -26,29 +28,52 @@
         <button type="submit" id="addUserBtn">Add Album</button>
     </form>
 
-   <div style="margin: 2%;" >
-    <table class="table" style="border: 1px solid gainsboro;width: 50%;">
-        <thead >
-          <tr >
-            <th>Title</th>
-            <th>Artist</th>
-            <th>Year</th>
-            <th>Action</th>
-          </tr>
-         </thead>
-         <tbody id="tableBody">
-         </tbody>
-     </table>
+    <div style="margin: 2%;">
+        <table id="dataTable" class="table" style="border: 1px solid gainsboro;width: 50%;">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Artist</th>
+                    <th>Year</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
     <script>
         // Get album data from server
         fetch('/api/albums')
             .then(response => response.json())
             .then(albums => {
-                albums.forEach(album => {
-                    let tableBody = document.getElementById("tableBody");
-                    tableBody.innerHTML += '<tr><td>' + album.title + '</td><td>' + album.artist + '</td><td>' + album.year + '</td><td><button>Edit</button><button onclick="handleDelete(album._id)">Delete</button></td></tr>';
-                });
+                // Get the table body element
+                let tableBody = document.querySelector("#dataTable tbody");
+
+                // Clear the existing data in the table
+                tableBody.innerHTML = "";
+
+                // Loop through the data and add it to the table
+                for (let i = 0; i < albums.length; i++) {
+                    let row = tableBody.insertRow();
+
+                    let title = row.insertCell();
+                    title.textContent = albums[i].title;
+
+                    let artist  = row.insertCell();
+                    emailCell.textContent = albums[i].artist;
+
+                    let year  = row.insertCell();
+                    phoneCell.textContent = albums[i].year;
+
+                    let actionCell = row.insertCell();
+                    actionCell.innerHTML = '<button type="button" onclick="editData(' + i + ')">Edit</button> <button type="button" onclick="deleteData(' + i + ')">Delete</button>';
+                }
+
+                // albums.forEach(album => {
+                //     let tableBody = document.getElementById("tableBody");
+                //     tableBody.innerHTML += '<tr id='+album._id+'><td>' + album.title + '</td><td>' + album.artist + '</td><td>' + album.year + '</td><td><button>Edit</button><button onclick="handleDelete('+JSON.stringify(album._id)+')">Delete</button></td></tr>';
+                // });
             })
             .catch(err => console.log(err));
 
@@ -59,7 +84,7 @@
             e.preventDefault();
             const title = document.getElementById('title').value;
             const artist = document.getElementById('artist').value;
-            const year  = document.getElementById('year').value;
+            const year = document.getElementById('year').value;
             fetch('/api/albums', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -68,9 +93,7 @@
                 .then(() => window.location.reload())
                 .catch(err => console.log(err));
         });
-        function handleDelete(id) {
-            alert(id)
-        }
+
     </script>
 </body>
 

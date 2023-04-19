@@ -5,7 +5,7 @@ const app = express();
 
 
 // Body parser middleware
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 
@@ -22,7 +22,7 @@ mongoose.connection.on('connected', function () {
 // Define a schema
 const albumSchema = new mongoose.Schema({
     title: String,
-    artist : String,
+    artist: String,
     year: Number
 });
 
@@ -40,29 +40,45 @@ app.get('/', (req, res) => {
 // Get all albums
 app.get('/api/albums', (req, res) => {
     Album.find()
-      .then(albums => {
-        res.json(albums);
-      })
-      .catch(err => console.log(err));
-  });
+        .then(albums => {
+            res.json(albums);
+        })
+        .catch(err => console.log(err));
+});
 
 
 // Get album by title
 app.get('/api/albums/:title', async (req, res) => {
-    
-        await Album.find({title:req.params.title})
-      .then((albums,error)=> {
-        if(albums){
-            res.status(200).json(albums);
-        }else{
-            res.status(404).json({message:error})
+    await Album.find({ title: req.params.title })
+        .then((albums, error) => {
+            if (albums) {
+                res.status(200).json(albums);
+            } else {
+                res.status(404).json({ message: error })
+            }
+        })
+        .catch(err => res.status(404).json({ message: err }));
+});
+
+// Create a new album
+app.post('/api/albums', async (req, res) => {
+    try {
+        // Check if data already exists in the collection
+        const existingData = await Album.findOne({ title: req.body.title });
+        if (existingData) {
+          // If data exists, return it
+          res.status(409).json(existingData);
+        } else {
+          // If data doesn't exist, save it in the collection
+          const newData = new Album(req.body);
+          await newData.save();
+          res.status(201).json(newData);
         }
-        
-      })
-      .catch(err => res.status(404).json({message:err}));
-    
-    
-  });
+      } catch (error) {
+        // Handle any errors
+        res.status(500).json({ error: error.message });
+      }
+});
 
 app.listen(3000, () => console.log('Server running on port 3000'));
 

@@ -80,7 +80,7 @@ app.post('/api/albums', async (req, res) => {
       }
 });
 
-// Update a new album
+// Update a album
 app.put('/api/albums/:id', async (req, res) => {
     try {
         // Check if data already exists in the collection
@@ -95,6 +95,24 @@ app.put('/api/albums/:id', async (req, res) => {
             year: req.body.year
           })
           .then(album => res.status(200).json(album))
+        }
+      } catch (error) {
+        // Handle any errors
+        res.status(500).json({ error: error.message });
+      }
+});
+
+// Delete a album
+app.delete('/api/albums/:id', async (req, res) => {
+    try {
+        // Check if data already exists in the collection
+        const existingData = await Album.findOne({ _id: req.params.id });
+        if (!existingData) {
+          // If data exists, return it
+          res.status(404).json("not found");
+        } else {
+          Album.findByIdAndRemove(req.params.id)
+          .then(album => res.json("deleted"))
         }
       } catch (error) {
         // Handle any errors

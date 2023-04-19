@@ -1,12 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Album</title>
+    <style>
+        tr,td,th{
+            border: 1px solid gainsboro;
+        }
+    </style>
 </head>
+
 <body>
-    <div>Server is up and runing</div>
+    <div style="margin: 2%;">Server is up and runing</div>
+
+    <form style="margin: 2%;">
+        <label for="title">Title:</label>
+        <input type="text" id="title" required>
+        <label for="artist">Artist:</label>
+        <input type="text" id="artist" required>
+        <label for="year">Year:</label>
+        <input type="number" id="year" required>
+        <button type="submit" id="addUserBtn">Add Album</button>
+    </form>
+
+   <div style="margin: 2%;" >
+    <table class="table" style="border: 1px solid gainsboro;width: 50%;">
+        <thead >
+          <tr >
+            <th>Title</th>
+            <th>Artist</th>
+            <th>Year</th>
+            <th>Action</th>
+          </tr>
+         </thead>
+         <tbody id="tableBody">
+         </tbody>
+     </table>
+    </div>
+    <script>
+        // Get album data from server
+        fetch('/api/albums')
+            .then(response => response.json())
+            .then(albums => {
+                albums.forEach(album => {
+                    let tableBody = document.getElementById("tableBody");
+                    tableBody.innerHTML += '<tr><td>' + album.title + '</td><td>' + album.artist + '</td><td>' + album.year + '</td><td><button>Edit</button><button onclick="handleDelete(album._id)">Delete</button></td></tr>';
+                });
+            })
+            .catch(err => console.log(err));
+
+        // Add new album to server
+        const form = document.querySelector('form');
+        const addUserBtn = document.getElementById('addUserBtn');
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const artist = document.getElementById('artist').value;
+            const year  = document.getElementById('year').value;
+            fetch('/api/albums', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, artist, year })
+            })
+                .then(() => window.location.reload())
+                .catch(err => console.log(err));
+        });
+        function handleDelete(id) {
+            alert(id)
+        }
+    </script>
 </body>
+
 </html>

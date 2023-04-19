@@ -46,6 +46,23 @@ app.get('/api/albums', (req, res) => {
       .catch(err => console.log(err));
   });
 
-  
+
+// Get album by title
+app.get('/api/albums/:title', async (req, res) => {
+    
+        await Album.find({title:req.params.title})
+      .then((albums,error)=> {
+        if(albums){
+            res.status(200).json(albums);
+        }else{
+            res.status(404).json({message:error})
+        }
+        
+      })
+      .catch(err => res.status(404).json({message:err}));
+    
+    
+  });
+
 app.listen(3000, () => console.log('Server running on port 3000'));
 

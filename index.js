@@ -82,6 +82,7 @@ app.post('/api/albums', async (req, res) => {
 
 // Update a album
 app.put('/api/albums/:id', async (req, res) => {
+    
     try {
         // Check if data already exists in the collection
         const existingData = await Album.findOne({ _id: req.params.id });

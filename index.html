@@ -7,17 +7,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Album</title>
     <style>
+        *{
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+        }
+
         tr,
         td,
         th {
             border: 1px solid gainsboro;
         }
+
+        #viewModal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        #viewModal .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%;
+        }
+
+        #viewModal .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #viewModal .close:hover,
+        #viewModal .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
-    <div style="margin: 2%;">Server is up and runing</div>
-
+    <div style="margin: 1%;">Server is up and runing</div>
+    <p style="margin: 1%;" id="formHeading"></p>
     <form style="margin: 2%;">
         <label for="title">Title:</label>
         <input type="text" id="title" required>
@@ -25,13 +63,14 @@
         <input type="text" id="artist" required>
         <label for="year">Year:</label>
         <input type="number" id="year" required>
-        <button type="submit" id="addUserBtn">Add Album</button>
+        <button type="submit" id="submitButton">Add Album</button>
     </form>
 
     <div style="margin: 2%;">
         <table id="dataTable" class="table" style="border: 1px solid gainsboro;width: 50%;">
             <thead>
                 <tr>
+                    <th>Sr. </th>
                     <th>Title</th>
                     <th>Artist</th>
                     <th>Year</th>
@@ -42,6 +81,19 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Modal dialog for viewing album details -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 class="modal-title" id="viewModalLabel">Album Title</h2>
+            <div class="modal-body">
+                <p>Loading album details...</p>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // Get album data from server
         fetch('/api/albums')
@@ -57,43 +109,142 @@
                 for (let i = 0; i < albums.length; i++) {
                     let row = tableBody.insertRow();
 
+                    let sr = row.insertCell();
+                    sr.textContent = i + 1;
+
                     let title = row.insertCell();
                     title.textContent = albums[i].title;
 
-                    let artist  = row.insertCell();
-                    emailCell.textContent = albums[i].artist;
+                    let artist = row.insertCell();
+                    artist.textContent = albums[i].artist;
 
-                    let year  = row.insertCell();
-                    phoneCell.textContent = albums[i].year;
+                    let year = row.insertCell();
+                    year.textContent = albums[i].year;
 
                     let actionCell = row.insertCell();
-                    actionCell.innerHTML = '<button type="button" onclick="editData(' + i + ')">Edit</button> <button type="button" onclick="deleteData(' + i + ')">Delete</button>';
+                    actionCell.innerHTML = '<button type="button" onclick="viewData(\'' + albums[i].title + '\')">View</button> <button type="button" onclick="editData(\'' + albums[i].title + '\')">Edit</button> <button type="button" onclick="deleteData(\'' + albums[i]._id + '\')">Delete</button>';
                 }
-
-                // albums.forEach(album => {
-                //     let tableBody = document.getElementById("tableBody");
-                //     tableBody.innerHTML += '<tr id='+album._id+'><td>' + album.title + '</td><td>' + album.artist + '</td><td>' + album.year + '</td><td><button>Edit</button><button onclick="handleDelete('+JSON.stringify(album._id)+')">Delete</button></td></tr>';
-                // });
             })
             .catch(err => console.log(err));
 
         // Add new album to server
         const form = document.querySelector('form');
-        const addUserBtn = document.getElementById('addUserBtn');
+        const submitButton = document.getElementById('submitButton');
         form.addEventListener('submit', e => {
             e.preventDefault();
-            const title = document.getElementById('title').value;
-            const artist = document.getElementById('artist').value;
-            const year = document.getElementById('year').value;
-            fetch('/api/albums', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, artist, year })
+            let id = document.getElementById('submitButton').getAttribute("data-id");
+            if (id == null) {
+                const title = document.getElementById('title').value;
+                const artist = document.getElementById('artist').value;
+                const year = document.getElementById('year').value;
+                fetch('/api/albums', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, artist, year })
+                })
+                    .then(() => window.location.reload())
+                    .catch(err => console.log(err));
+            } else {
+                updateData(id)
+            }
+
+        });
+        function deleteData(index) {
+            // confirmation
+            if (confirm("You Really Want to Delete the Record") == true) {
+                //Make a DELETE request to the API to delete the data with the specified ID
+                fetch('/api/albums/' + index, {
+                    method: 'DELETE'
+                }).then(() => { alert("Record Deleted"); window.location.reload() })
+                    .catch(err => console.log(err));
+            } else {
+                return
+            }
+        }
+
+        // Function to populate the form fields with the data to be edited
+        function editData(title) {
+
+            fetch('/api/albums/' + title)
+                .then(response => response.json())
+                .then(data => {
+                    // Populate the form fields with the data to be edited
+                    document.querySelector("#title").value = data[0].title;
+                    document.querySelector("#artist").value = data[0].artist;
+                    document.querySelector("#year").value = data[0].year;
+
+                    // Set the ID of the data to be edited as a data attribute on the submit button
+                    let submitButton = document.querySelector("#submitButton");
+                    submitButton.setAttribute("data-id", data[0]._id);
+
+                    // Change the form heading to indicate that we are editing data
+                    document.querySelector("#submitButton").textContent = "Update Data";
+                    document.querySelector("#formHeading").textContent = "Edit Data";
+
+                })
+                .catch(err => console.log(err));
+
+        }
+
+
+
+        // Function to update the data in the API and display the updated data in the table
+        function updateData() {
+            // Get the ID of the data to be updated from the data attribute on the submit button
+            let id = document.querySelector("#submitButton").getAttribute("data-id");
+
+            // Get the updated data from the form fields
+            let updatedData = {
+                title: document.querySelector("#title").value,
+                artist: document.querySelector("#artist").value,
+                year: document.querySelector("#year").value
+            };
+
+            // Make a PUT request to the API to update the data with the specified ID
+            fetch('/api/albums/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedData)
             })
                 .then(() => window.location.reload())
                 .catch(err => console.log(err));
-        });
+        }
 
+        function viewData(title) {
+
+            fetch('/api/albums/' + title)
+                .then(response => response.json())
+                .then(album => {
+                    // Update the modal title
+                    const modalTitle = document.getElementById("viewModalLabel");
+                    modalTitle.innerText = album[0].title;
+
+                    // Update the modal body with the album details
+                    const modalBody = document.querySelector("#viewModal .modal-body");
+                    modalBody.innerHTML = `
+                    <p>Artist: ${album[0].artist}</p>
+                    <p>Year: ${album[0].year}</p>
+    
+  `;
+
+                })
+                .catch(err => console.log(err));
+
+
+
+            // Show the modal
+            const modal = document.getElementById("viewModal");
+            modal.style.display = "block";
+
+            // When the user clicks the close button or outside the modal, close it
+            const closeButton = document.querySelector("#viewModal .close, #viewModal #closeBtn");
+
+
+            closeButton.onclick = () => modal.style.display = "none";
+
+        }
     </script>
 </body>
 

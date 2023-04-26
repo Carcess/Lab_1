@@ -12,6 +12,9 @@
     "type": "git",
     "url": "git+https://github.com/Carcess/lab_1.git"
   },
+   "engines": {
+    "node": ">=14 <15"
+  },
   "author": "",
   "license": "ISC",
   "bugs": {
